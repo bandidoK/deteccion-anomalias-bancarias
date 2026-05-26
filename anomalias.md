@@ -3,13 +3,13 @@
 | Campo | Valor |
 | --- | --- |
 | **Aplicación** | DetecciónAnomalíasBancarias |
-| **Versión** | 0.3 (25/05/2026) |
+| **Versión** | 0.4 (26/05/2026) |
 | **Ámbito** | Sistema académico de detección de fraude bancario sobre logs sintéticos |
 | **Tecnología** | Java 17 · Spring Boot 3.2 · Spring Security · JPA / H2 / MySQL · HTML/CSS/JS |
 | **Tema central** | Seguridad integral en sistemas de procesamiento masivo de logs financieros |
-| **Producto** | Tres módulos: generador de logs (`/generador`), detector de anomalías (`/detector`) y panel de auditoría (`/panel`) |
+| **Producto** | Cuatro módulos: generador de logs (`/generador`), detector de anomalías (`/detector`), panel de auditoría (`/panel`) y generador bancario de Juan Carlos (`/banco-fraudekike`, en `rama-juancarlos`) |
 | **Equipo** | Juan Carlos (generador) · Adrián (detector) · Javier (panel) · Kike (coordinación) |
-| **Fecha** | 25/05/2026 |
+| **Fecha** | 26/05/2026 |
 
 ---
 

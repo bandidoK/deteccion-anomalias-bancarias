@@ -45,10 +45,18 @@ docker-compose up -d
 
 ## Endpoints
 
+### Logs genéricos
+
 - `POST /api/logs`: ingresa un evento JSON.
 - `POST /api/logs/batch`: ingiere múltiples eventos en una sola llamada.
 - `GET /api/logs/summary`: obtiene métricas, niveles, fuentes, anomalías y últimos logs.
 - `GET /api/logs/recent`: lista eventos recientes, con filtros por `source`, `level`, `minutes` y `contains`.
+
+### Logs bancarios (formato `formato-logs.md`)
+
+- `POST /api/banking/transactions`: procesa una transacción bancaria en formato pipe-separated.
+- `POST /api/banking/batch`: procesa un array JSON de transacciones bancarias.
+- `POST /api/banking/upload-csv`: sube un fichero CSV con transacciones (parser línea a línea).
 
 ## Ejemplo de evento JSON
 

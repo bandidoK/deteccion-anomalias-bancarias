@@ -17,6 +17,7 @@ de patrones anómalos en logs masivos de transacciones bancarias.
 - `/generador` — Generación de logs sintéticos masivos
 - `/detector` — Análisis y detección de patrones sospechosos
 - `/panel` — Panel de auditoría con Spring Boot
+- `/banco-fraudekike` — Módulo de Juan Carlos: generador de datos bancarios sintéticos (en `rama-juancarlos`)
 
 ## Normas del repositorio
 
@@ -33,6 +34,22 @@ de patrones anómalos en logs masivos de transacciones bancarias.
 
 ## Registro de cambios
 
+### v0.6 — 26/05/2026 (Kike — coordinación)
+
+- **Módulo `banco-fraudekike` (Juan Carlos) subido a `rama-juancarlos`:**
+  Juan Carlos ha entregado su generador de datos bancarios sintéticos.
+  Contiene: `BancoFraudeApplication`, modelos `Transaccion` y `Usuario`,
+  repositorios JPA (`TransaccionRepository`, `UsuarioRepository`),
+  servicio `DataGeneratorService` y controlador `AuditController`.
+- **Limpieza aplicada por el coordinador:** se eliminaron la carpeta `target/` (compilados Maven)
+  y los scripts internos antes del commit, siguiendo el procedimiento estándar del equipo (ver v0.3).
+- **Nota técnica:** los modelos y repositorios están actualmente en `src/test/` en lugar de
+  `src/main/` — pendiente de corrección antes del merge a `main`.
+- **Corrección en README:** eliminada la nota de v0.5 que marcaba el módulo de Juan Carlos
+  como pendiente de entrega. El módulo ya está en `rama-juancarlos`.
+- **Pendiente:** verificar compatibilidad del `DataGeneratorService` con el formato de logs
+  definido en `formato-logs.md` antes de integrar con `/detector`.
+
 ### v0.5 — 26/05/2026 (Kike — coordinación)
 
 - **Reestructuración del repositorio:** la carpeta `deteccion-anomalias-bancarias-main/`
@@ -40,9 +57,8 @@ de patrones anómalos en logs masivos de transacciones bancarias.
   `/panel`, `/generador` y `/detector` ahora están directamente en la raíz del proyecto.
 - **`.gitignore` reforzado:** añadidas entradas `verdad_oculta*.csv` (fichero que
   NUNCA debe subirse al repositorio — entrega directa al profesor) y `.claude/`.
-- **Problema de coordinación — módulo `/generador` (Juan Carlos):**
-  Juan Carlos aún no ha subido su trabajo a la rama `rama-juancarlos`. El módulo
-  `/generador` solo contiene el fichero `.gitkeep` de marcador. Pendiente de entrega.
+- **Módulo de Juan Carlos:** en este punto aún no había subido su trabajo a `rama-juancarlos`.
+  Resuelto en v0.6 — el módulo `banco-fraudekike` ya está en la rama.
 - **Problema de coordinación — módulo `/detector` (Adrián):**
   Adrián aún no ha subido su trabajo a la rama `rama-adrian`. El módulo
   `/detector` solo contiene el fichero `.gitkeep` de marcador. Pendiente de entrega.
