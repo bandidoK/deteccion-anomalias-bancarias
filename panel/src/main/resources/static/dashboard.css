@@ -1,0 +1,189 @@
+:root {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #1f2937;
+    background: #f4f6f8;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: #111827;
+    color: #ffffff;
+    padding: 24px 36px;
+}
+
+header h1 {
+    margin: 0 0 8px;
+}
+
+header p {
+    margin: 0;
+    opacity: 0.8;
+}
+
+.header-actions {
+    margin-top: 16px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background: #1d4ed8;
+}
+
+.summary,
+.filters,
+.panels {
+    display: grid;
+    gap: 16px;
+    padding: 24px 36px;
+}
+
+.summary {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.filters {
+    grid-template-columns: 2fr 1fr;
+}
+
+.filter-card,
+.card,
+.panel {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+}
+
+.filter-card h2,
+.card h2,
+.panel h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.filter-card form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+.filter-card label {
+    display: grid;
+    gap: 6px;
+    font-size: 0.95rem;
+    color: #374151;
+}
+
+.filter-card input,
+.filter-card select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.filter-card button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.filter-card button:hover {
+    background: #1d4ed8;
+}
+
+.filter-card span {
+    align-self: center;
+    color: #4b5563;
+    font-size: 0.95rem;
+}
+
+.panels {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.panel {
+    overflow-x: auto;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th,
+table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+}
+
+table th {
+    color: #374151;
+    font-weight: 600;
+}
+
+footer {
+    padding: 18px 36px;
+    font-size: 0.95rem;
+    color: #6b7280;
+}
+
+@media print {
+    body {
+        background: #fff;
+    }
+
+    header {
+        background: #111827 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .header-actions,
+    .filter-card button,
+    #exportPdfButton {
+        display: none !important;
+    }
+
+    .card,
+    .filter-card,
+    .panel {
+        box-shadow: none;
+        border: 1px solid #d1d5db;
+    }
+
+    a {
+        color: #000;
+        text-decoration: none;
+    }
+}

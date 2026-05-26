@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Auditoría</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <header>
+        <h1>Panel de Auditoría de Logs</h1>
+        <p>Monitoreo en tiempo real de logs masivos, anomalías y filtros por fuente, nivel y texto.</p>
+        <p class="home-link">Visita el <a href="dashboard.html">dashboard extendido</a> para cargar archivos y búsquedas avanzadas.</p>
+        <div class="header-actions">
+            <button id="exportPdfButton" class="btn" type="button">Exportar PDF</button>
+        </div>
+    </header>
+
+    <section class="summary">
+        <div class="card">
+            <h2>Total de eventos</h2>
+            <p id="totalEvents">0</p>
+        </div>
+        <div class="card">
+            <h2>Contador por nivel</h2>
+            <pre id="levelCounts">-</pre>
+        </div>
+        <div class="card">
+            <h2>Contador por fuente</h2>
+            <pre id="sourceCounts">-</pre>
+        </div>
+    </section>
+
+    <section class="filters">
+        <div class="filter-card">
+            <h2>Filtros</h2>
+            <form id="filterForm">
+                <label>
+                    Fuente
+                    <select id="filterSource">
+                        <option value="">Todas</option>
+                    </select>
+                </label>
+                <label>
+                    Nivel
+                    <select id="filterLevel">
+                        <option value="">Todos</option>
+                    </select>
+                </label>
+                <label>
+                    Texto
+                    <input id="filterSearch" type="text" placeholder="Buscar en mensaje" />
+                </label>
+                <label>
+                    Últimos minutos
+                    <select id="filterWindow">
+                        <option value="5">5</option>
+                        <option value="15" selected>15</option>
+                        <option value="60">60</option>
+                    </select>
+                </label>
+                <button type="button" id="applyFilters">Aplicar filtros</button>
+                <span id="filteredCount">0 mensajes</span>
+            </form>
+        </div>
+        <div class="filter-card upload-card">
+            <h2>Carga de archivo</h2>
+            <form id="uploadForm">
+                <label>
+                    Archivo CSV / JSON
+                    <input id="uploadFile" type="file" accept=".csv,.json" />
+                </label>
+                <button type="button" id="uploadButton">Subir y procesar</button>
+                <p id="uploadStatus">Arrastra o selecciona un archivo para ingestar.</p>
+            </form>
+        </div>
+        <div class="filter-card top-lists">
+            <h2>Top recuentos</h2>
+            <div class="top-info">
+                <div>
+                    <h3>Fuentes principales</h3>
+                    <ul id="topSources"></ul>
+                </div>
+                <div>
+                    <h3>Niveles principales</h3>
+                    <ul id="topLevels"></ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panels">
+        <div class="panel anomalies-panel">
+            <h2>Anomalías</h2>
+            <ul id="anomalies"></ul>
+        </div>
+        <div class="panel logs-panel">
+            <h2>Logs recientes</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Fuente</th>
+                        <th>Nivel</th>
+                        <th>Mensaje</th>
+                    </tr>
+                </thead>
+                <tbody id="recentLogs"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        <p>Panel de auditoría creado con Spring Boot.</p>
+    </footer>
+
+    <section class="dev-tools">
+        <h2>Herramientas de desarrollo</h2>
+        <p>
+            <a class="btn" href="/api/sql/schema">Descargar schema SQL</a>
+            <button id="sendTestLog" class="btn">Enviar log de prueba</button>
+        </p>
+        <div id="testResult" style="margin-top:8px;color:#333"></div>
+    </section>
+
+    <script src="app.js"></script>
+
+    <script>
+        document.getElementById('sendTestLog').addEventListener('click', async function () {
+            const payload = { source: 'frontend-test', level: 'ERROR', message: 'Prueba desde frontend' };
+            try {
+                const res = await fetch('/api/logs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const text = await res.text();
+                document.getElementById('testResult').innerText = 'Estado: ' + res.status + ' — ' + (text || 'OK');
+            } catch (err) {
+                document.getElementById('testResult').innerText = 'Error: ' + err.message;
+            }
+        });
+
+        const exportPdfButton = document.getElementById('exportPdfButton');
+        if (exportPdfButton) {
+            exportPdfButton.addEventListener('click', function () {
+                window.print();
+            });
+        }
+    </script>
+</body>
+</html>

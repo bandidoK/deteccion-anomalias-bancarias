@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard de Auditoría</title>
+    <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+    <header>
+        <h1>Dashboard de Auditoría de Logs</h1>
+        <p>Ingestión de logs masivos, detección de anomalías y carga de archivos.</p>
+        <div class="header-actions">
+            <button id="exportPdfButton" class="btn" type="button">Exportar PDF</button>
+        </div>
+    </header>
+
+    <section class="summary">
+        <div class="card">
+            <h2>Total de eventos</h2>
+            <p id="totalEvents">0</p>
+        </div>
+        <div class="card">
+            <h2>Contador por nivel</h2>
+            <pre id="levelCounts">-</pre>
+        </div>
+        <div class="card">
+            <h2>Contador por fuente</h2>
+            <pre id="sourceCounts">-</pre>
+        </div>
+    </section>
+
+    <section class="filters">
+        <div class="filter-card">
+            <h2>Filtros</h2>
+            <form id="filterForm">
+                <label>
+                    Fuente
+                    <select id="filterSource">
+                        <option value="">Todas</option>
+                    </select>
+                </label>
+                <label>
+                    Nivel
+                    <select id="filterLevel">
+                        <option value="">Todos</option>
+                    </select>
+                </label>
+                <label>
+                    Texto
+                    <input id="filterSearch" type="text" placeholder="Buscar en mensaje" />
+                </label>
+                <label>
+                    Últimos minutos
+                    <select id="filterWindow">
+                        <option value="5">5</option>
+                        <option value="15" selected>15</option>
+                        <option value="60">60</option>
+                    </select>
+                </label>
+                <button type="button" id="applyFilters">Aplicar filtros</button>
+                <span id="filteredCount">0 mensajes</span>
+            </form>
+        </div>
+        <div class="filter-card upload-card">
+            <h2>Carga de archivo</h2>
+            <form id="uploadForm">
+                <label>
+                    Archivo CSV / JSON
+                    <input id="uploadFile" type="file" accept=".csv,.json" />
+                </label>
+                <button type="button" id="uploadButton">Subir y procesar</button>
+                <p id="uploadStatus">Selecciona un archivo para cargar.</p>
+            </form>
+        </div>
+        <div class="filter-card top-lists">
+            <h2>Top recuentos</h2>
+            <div class="top-info">
+                <div>
+                    <h3>Fuentes principales</h3>
+                    <ul id="topSources"></ul>
+                </div>
+                <div>
+                    <h3>Niveles principales</h3>
+                    <ul id="topLevels"></ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panels">
+        <div class="panel anomalies-panel">
+            <h2>Anomalías</h2>
+            <table id="anomaliesTable" style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead>
+                    <tr style="background:#f0f0f0;">
+                        <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">ANO-ID</th>
+                        <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">Severidad</th>
+                        <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">Categoría</th>
+                        <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">Cuenta</th>
+                        <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody id="anomaliesTableBody"></tbody>
+            </table>
+            <!-- Legacy list kept for backward-compat with existing dashboard.js -->
+            <ul id="anomalies" style="display:none;"></ul>
+        </div>
+        <div class="panel logs-panel">
+            <h2>Logs recientes</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Fuente</th>
+                        <th>Nivel</th>
+                        <th>Mensaje</th>
+                    </tr>
+                </thead>
+                <tbody id="recentLogs"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ================================================================
+         SECCIÓN: Logs bancarios
+         ================================================================ -->
+    <section class="filters" id="bankingSection" style="margin-top:2rem;">
+        <div class="filter-card upload-card" style="flex:1 1 100%;max-width:100%;">
+            <h2>Logs bancarios</h2>
+            <p style="margin-bottom:0.75rem;color:#555;font-size:0.9rem;">
+                Carga un fichero CSV con transacciones bancarias (separadas por <code>|</code>) para detectar anomalías
+                (ANO-001 a ANO-054). Formato esperado de cabecera:<br/>
+                <code>transaction_id|timestamp|cuenta_origen|cuenta_destino|importe|divisa|tipo_operacion|ip_origen|dispositivo_id|pais_origen|pais_destino|sesion_id|concepto|estado</code>
+            </p>
+            <form id="bankingUploadForm" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+                <label style="flex:1 1 260px;">
+                    Archivo CSV bancario
+                    <input id="bankingFile" type="file" accept=".csv,.txt"
+                           style="display:block;margin-top:4px;width:100%;" />
+                </label>
+                <button type="button" id="bankingUploadButton"
+                        style="padding:0.5rem 1.25rem;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.95rem;">
+                    Analizar transacciones
+                </button>
+            </form>
+
+            <div id="bankingStatus" style="margin-top:0.75rem;font-size:0.9rem;color:#333;"></div>
+
+            <div id="bankingResults" style="display:none;margin-top:1rem;">
+                <h3 style="margin-bottom:0.5rem;">Resultado del análisis</h3>
+                <div id="bankingSummary" style="margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#f8f8f8;border-left:4px solid #2563eb;font-size:0.9rem;"></div>
+                <table id="bankingAnomaliesTable"
+                       style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#f0f0f0;">
+                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">#</th>
+                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">ANO-ID</th>
+                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">Severidad</th>
+                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">Categoría</th>
+                            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #ccc;">Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bankingAnomaliesBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>Dashboard creado con Spring Boot.</p>
+    </footer>
+
+    <script src="dashboard.js"></script>
+    <script>
+        // ---- Export PDF ----
+        const exportPdfButton = document.getElementById('exportPdfButton');
+        if (exportPdfButton) {
+            exportPdfButton.addEventListener('click', function () {
+                window.print();
+            });
+        }
+
+        // ---- Banking CSV upload ----
+        document.getElementById('bankingUploadButton').addEventListener('click', async function () {
+            const fileInput = document.getElementById('bankingFile');
+            const statusEl  = document.getElementById('bankingStatus');
+            const resultsEl = document.getElementById('bankingResults');
+            const summaryEl = document.getElementById('bankingSummary');
+            const bodyEl    = document.getElementById('bankingAnomaliesBody');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                statusEl.textContent = 'Por favor selecciona un archivo CSV primero.';
+                statusEl.style.color = '#b91c1c';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            statusEl.textContent = 'Procesando...';
+            statusEl.style.color = '#2563eb';
+            resultsEl.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/banking/upload-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const errText = await res.text();
+                    statusEl.textContent = 'Error del servidor: ' + res.status + ' — ' + errText;
+                    statusEl.style.color = '#b91c1c';
+                    return;
+                }
+
+                const data = await res.json();
+                statusEl.textContent = 'Analisis completado.';
+                statusEl.style.color = '#16a34a';
+
+                summaryEl.innerHTML =
+                    '<strong>Transacciones procesadas:</strong> ' + (data.processed || 0) +
+                    ' &nbsp;|&nbsp; <strong>Anomalias detectadas:</strong> ' + (data.anomaliesFound || 0);
+
+                bodyEl.innerHTML = '';
+                const anomalies = data.anomalies || [];
+                if (anomalies.length === 0) {
+                    bodyEl.innerHTML = '<tr><td colspan="5" style="padding:8px;color:#555;">Sin anomalias detectadas.</td></tr>';
+                } else {
+                    anomalies.forEach(function (raw, idx) {
+                        const parts = (raw || '').split('|');
+                        const anoId    = parts[0] || '';
+                        const sev      = parts[1] || '';
+                        const cat      = parts[2] || '';
+                        const detalle  = parts.slice(3).join('|');
+                        const sevColor = sev === 'CRITICA' ? '#b91c1c'
+                                       : sev === 'ALTA'    ? '#d97706'
+                                       : sev === 'MEDIA'   ? '#0369a1'
+                                       : '#374151';
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = '1px solid #e5e7eb';
+                        tr.innerHTML =
+                            '<td style="padding:6px 8px;">' + (idx + 1) + '</td>' +
+                            '<td style="padding:6px 8px;font-weight:600;">' + escHtml(anoId) + '</td>' +
+                            '<td style="padding:6px 8px;color:' + sevColor + ';font-weight:600;">' + escHtml(sev) + '</td>' +
+                            '<td style="padding:6px 8px;">' + escHtml(cat) + '</td>' +
+                            '<td style="padding:6px 8px;">' + escHtml(detalle) + '</td>';
+                        bodyEl.appendChild(tr);
+                    });
+                }
+
+                resultsEl.style.display = 'block';
+
+            } catch (err) {
+                statusEl.textContent = 'Error de red: ' + err.message;
+                statusEl.style.color = '#b91c1c';
+            }
+        });
+
+        function escHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>

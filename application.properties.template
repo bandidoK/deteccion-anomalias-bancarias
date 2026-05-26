@@ -1,0 +1,31 @@
+# Copiar este fichero como application.properties en cada módulo
+# y rellenar los valores reales (este fichero SÍ se sube al repo)
+
+# ── Base de datos ──────────────────────────────────────────
+# Desarrollo con H2 en memoria (sin instalar nada)
+spring.datasource.url=jdbc:h2:mem:anomalias
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# Consola H2 accesible en http://localhost:8080/h2-console
+spring.h2.console.enabled=true
+
+# Para MySQL en producción, comentar las líneas H2 y usar:
+# spring.datasource.url=jdbc:mysql://localhost:3306/anomalias_bancarias
+# spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+# spring.datasource.username=${DB_USER}
+# spring.datasource.password=${DB_PASS}
+
+# ── JPA / Hibernate ────────────────────────────────────────
+spring.jpa.hibernate.ddl-auto=none
+spring.sql.init.mode=always
+spring.sql.init.schema-locations=classpath:schema.sql
+spring.jpa.show-sql=false
+
+# ── Servidor ───────────────────────────────────────────────
+server.port=8080
+
+# ── Logs ───────────────────────────────────────────────────
+logging.level.root=WARN
+logging.level.com.banco=INFO

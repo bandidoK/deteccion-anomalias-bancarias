@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anomalías - Panel</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #chartContainer { width: 600px; }
+    </style>
+</head>
+<body>
+    <h1>Alertas en tiempo real</h1>
+    <p>Cuando Adrián inserte una fila nueva en <strong>alertas_auditoria</strong>, el gráfico se actualizará automáticamente.</p>
+    <p><button id="exportPdfButton" type="button">Exportar PDF</button></p>
+
+    <div id="chartContainer">
+        <canvas id="severityChart"></canvas>
+    </div>
+
+    <h2>Últimas alertas</h2>
+    <ul id="anomalyList"></ul>
+
+    <script>
+        const ctx = document.getElementById('severityChart').getContext('2d');
+        const data = { labels: ['ALTA','MEDIA','BAJA'], datasets: [{ label: 'Recuento', data: [0,0,0], backgroundColor: ['#d9534f','#f0ad4e','#5bc0de'] }] };
+        const chart = new Chart(ctx, { type: 'bar', data: data, options: { responsive: true, maintainAspectRatio: false } });
+
+        function addAnomalyToList(a) {
+            const li = document.createElement('li');
+            li.textContent = `${new Date(a.timestampDetection).toLocaleString()} [${a.severidad}] ${a.tipoAnomalia} — ${a.entidadSospechosa || '-'}: ${a.descripcion || ''}`;
+            const list = document.getElementById('anomalyList');
+            list.insertBefore(li, list.firstChild);
+            // update chart
+            const idx = { 'ALTA':0, 'MEDIA':1, 'BAJA':2 }[a.severidad] || 2;
+            chart.data.datasets[0].data[idx] = (chart.data.datasets[0].data[idx] || 0) + 1;
+            chart.update();
+        }
+
+        // load existing
+        fetch('/api/anomalies', { credentials: 'same-origin' }).then(r => r.json()).then(list => {
+            list.forEach(a => addAnomalyToList(a));
+        }).catch(()=>{});
+
+        // SSE
+        const es = new EventSource('/api/anomalies/stream');
+        es.addEventListener('anomaly', e => {
+            try {
+                const a = JSON.parse(e.data);
+                addAnomalyToList(a);
+            } catch (err) { }
+        });
+
+        const exportPdfButton = document.getElementById('exportPdfButton');
+        if (exportPdfButton) {
+            exportPdfButton.addEventListener('click', function () {
+                window.print();
+            });
+        }
+    </script>
+</body>
+</html>
