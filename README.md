@@ -33,6 +33,26 @@ de patrones anómalos en logs masivos de transacciones bancarias.
 
 ## Registro de cambios
 
+### v0.5 — 26/05/2026 (Kike — coordinación)
+
+- **Reestructuración del repositorio:** la carpeta `deteccion-anomalias-bancarias-main/`
+  que se había creado anidada dentro del repo se ha aplanado a la raíz. Los módulos
+  `/panel`, `/generador` y `/detector` ahora están directamente en la raíz del proyecto.
+- **`.gitignore` reforzado:** añadidas entradas `verdad_oculta*.csv` (fichero que
+  NUNCA debe subirse al repositorio — entrega directa al profesor) y `.claude/`.
+- **Problema de coordinación — módulo `/generador` (Juan Carlos):**
+  Juan Carlos aún no ha subido su trabajo a la rama `rama-juancarlos`. El módulo
+  `/generador` solo contiene el fichero `.gitkeep` de marcador. Pendiente de entrega.
+- **Problema de coordinación — módulo `/detector` (Adrián):**
+  Adrián aún no ha subido su trabajo a la rama `rama-adrian`. El módulo
+  `/detector` solo contiene el fichero `.gitkeep` de marcador. Pendiente de entrega.
+  **Importante:** Adrián no debe tener acceso al fichero `verdad_oculta*.csv`
+  hasta que haya completado y subido su análisis de forma independiente.
+- **Incidencia técnica:** los cambios del día 25/05 se subieron manualmente al repo
+  fuera del flujo habitual (chat VS Code en lugar del proceso de rama + PR acordado),
+  lo que generó una historia de commits huérfana localmente. Corregido hoy mediante
+  rebase sobre `origin/main` antes de empujar.
+
 ### v0.4 — 25/05/2026 (Kike — coordinación)
 
 - **`anomalias.md` reestructurado** como Entregable 2 completo siguiendo el formato
